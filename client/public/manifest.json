@@ -1,0 +1,27 @@
+{
+  "short_name": "CSM Checklist",
+  "name": "CSM Checklist - Pielęgniarstwo",
+  "description": "Aplikacja checklisty dla wykładowców kierunku pielęgniarstwa",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#667eea",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["education", "productivity"]
+}
+

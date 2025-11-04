@@ -1,0 +1,21 @@
+{
+  "name": "checklista-wykladowcow",
+  "version": "1.0.0",
+  "description": "Aplikacja checklisty dla wykładowców kierunku pielęgniarstwa",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && nodemon index.js",
+    "client": "cd client && npm start",
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "start:all": "concurrently \"npm run server\" \"npm run client\""
+  },
+  "keywords": ["checklist", "nursing", "university"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.0.2"
+  }
+}
+
