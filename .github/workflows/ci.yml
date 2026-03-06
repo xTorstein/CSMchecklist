@@ -46,11 +46,19 @@ jobs:
         with:
           node-version: '18'
       
-      - name: Clean and install frontend dependencies
+      - name: Show Node/NPM versions (frontend)
+        working-directory: ./client
+        run: |
+          node --version
+          npm --version
+
+      - name: Clean and install frontend dependencies (npm install)
         working-directory: ./client
         run: |
           rm -rf node_modules
           npm install --no-audit --no-fund
+          # Helpful debug if Actions still reports missing yaml from lockfile
+          npm ls yaml || true
       
       - name: Build frontend
         working-directory: ./client
