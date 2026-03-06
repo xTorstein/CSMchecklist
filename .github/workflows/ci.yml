@@ -44,18 +44,21 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '18'
       
-      - name: Install frontend dependencies
+      - name: Clean and install frontend dependencies
         working-directory: ./client
-        run: npm install
+        run: |
+          rm -rf node_modules
+          npm install --no-audit --no-fund
       
       - name: Build frontend
         working-directory: ./client
-        run: npm run build
         env:
           CI: false
           NODE_OPTIONS: --max-old-space-size=4096
+          GENERATE_SOURCEMAP: false
+        run: npm run build
       
       - name: Check build output
         run: |
