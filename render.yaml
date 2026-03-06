@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: csm-checklist-backend
+    env: node
+    region: frankfurt
+    plan: free
+    rootDir: server
+    buildCommand: npm ci
+    startCommand: node index.js
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+
+  - type: static
+    name: csm-checklist-frontend
+    env: static
+    region: frankfurt
+    plan: free
+    buildCommand: cd client && npm ci && npm run build
+    staticPublishPath: client/build
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: REACT_APP_API_URL
+        sync: false

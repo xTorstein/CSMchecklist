@@ -55,9 +55,9 @@ Kliknij **"Advanced"** → **"Add Environment Variable"** i dodaj:
 ```
 SMTP_HOST = smtp.gmail.com
 SMTP_PORT = 587
-SMTP_USER = czopekwiktor1@gmail.com
-SMTP_PASS = kjos wvsy lijz xjoe
-ADMIN_EMAIL = czopekwiktor1@gmail.com
+SMTP_USER = twoj-email@gmail.com
+SMTP_PASS = twoje-haslo-aplikacji (Gmail: hasło aplikacji)
+ADMIN_EMAIL = email-odbiorcy@gmail.com
 ```
 
 6. Kliknij **"Create Web Service"**
