@@ -21,10 +21,13 @@ app.use('/api/checklist', checklistRoutes);
 
 // Health check endpoint (includes email config status for debugging)
 app.get('/api/health', (req, res) => {
+  const emailConfigured = emailService.isEmailConfigured();
+  const emailProvider = process.env.RESEND_API_KEY ? 'resend' : (process.env.SMTP_USER ? 'smtp' : 'none');
   res.json({
     status: 'OK',
     message: 'Server is running',
-    emailConfigured: emailService.isEmailConfigured()
+    emailConfigured,
+    emailProvider
   });
 });
 

@@ -1,51 +1,68 @@
 # Konfiguracja email na Renderze (backend)
 
-Aby lista z formularza była wysyłana na maila, w **Web Service** (backend) na Renderze muszą być ustawione zmienne środowiskowe SMTP.
+Aby lista z formularza była wysyłana na maila, w **Web Service** (backend) na Renderze ustaw zmienne środowiskowe. Masz dwie opcje.
 
-## Kroki
+---
 
-1. Wejdź na [Render Dashboard](https://dashboard.render.com).
-2. Otwórz **Web Service** z backendem (np. `csmchecklist-backend`).
-3. W lewym menu wybierz **Environment**.
-4. Dodaj zmienne (każda osobno; **Key** i **Value**):
+## Opcja A: Resend (zalecane na Renderze)
 
-   | Key         | Value (przykład)        | Opis |
-   |------------|--------------------------|------|
-   | `SMTP_HOST` | `smtp.gmail.com`        | Serwer SMTP (dla Gmaila: smtp.gmail.com) |
-   | `SMTP_PORT` | `587`                   | Port (587 dla TLS) |
-   | `SMTP_USER` | `twoj-email@gmail.com`  | Adres email do logowania SMTP |
-   | `SMTP_PASS` | `hasło-aplikacji`       | Hasło aplikacji (Gmail: hasło aplikacji, nie zwykłe hasło) |
-   | `ADMIN_EMAIL` | `twoj-email@gmail.com` | Adres, na który mają przychodzić powiadomienia (checklisty) |
+**Resend** działa z chmury bez blokad. Gmail SMTP z Render często nie działa (blokada połączeń z serwerów hostingowych). Resend ma darmowy limit (np. 3000 maili/mies.) i wymaga tylko klucza API.
 
-5. Kliknij **Save Changes**. Render zrestartuje usługę.
+### Kroki
 
-### Gmail – hasło aplikacji (obowiązkowe)
+1. Załóż konto na [resend.com](https://resend.com) i zaloguj się.
+2. W panelu: **API Keys** → **Create API Key** → skopiuj klucz (zaczyna się od `re_`).
+3. (Opcjonalnie) W **Domains** dodaj i zweryfikuj domenę – wtedy maile mogą być „Od” twojego adresu. Do testów możesz zostawić domyślny nadawcę.
+4. Na Renderze: Web Service (backend) → **Environment**. Dodaj:
 
-- **Nie używaj zwykłego hasła do konta** – Gmail blokuje logowanie z zewnętrznych aplikacji.
-- Wejdź w konto Google → [Bezpieczeństwo](https://myaccount.google.com/security) → **Weryfikacja dwuetapowa** (musi być włączona) → **Hasła aplikacji**.
-- Wygeneruj hasło aplikacji (np. „CSM Checklist”) i wklej je w zmienną **SMTP_PASS** na Renderze.
-- W `SMTP_USER` podaj pełny adres Gmaila (np. `twoj.email@gmail.com`).
+   | Key | Value |
+   |-----|--------|
+   | `RESEND_API_KEY` | `re_xxxxxxxx` (twój klucz) |
+   | `ADMIN_EMAIL` | adres e-mail, na który mają przychodzić checklisty |
 
-### Jeśli port 587 nie działa (timeout / ECONNREFUSED)
+5. (Opcjonalnie) Jeśli masz zweryfikowaną domenę w Resend, dodaj:
+   - `RESEND_FROM_EMAIL` = `"CSM Checklist" <notifications@twoja-domena.pl>`  
+   Bez tego maile będą wysyłane z `onboarding@resend.dev` (działa do testów).
 
-- Na Renderze ustaw **SMTP_PORT** = **465** (SSL). Reszta zmiennych bez zmian.
+6. **Save Changes** – Render zrestartuje backend.
 
-## Sprawdzenie
+### Sprawdzenie
 
-1. **Czy zmienne są widoczne**  
-   Otwórz: `https://TWOJ-BACKEND.onrender.com/api/health`  
-   W odpowiedzi powinno być: `"emailConfigured": true`.  
-   Jeśli jest `false`, którejś zmiennej (SMTP_USER, SMTP_PASS, ADMIN_EMAIL) brakuje w Environment backendu.
+- Otwórz: `https://TWOJ-BACKEND.onrender.com/api/health` → powinno być `"emailConfigured": true`.
+- Otwórz: `https://TWOJ-BACKEND.onrender.com/api/email-test` → odpowiedź `{"ok":true,...}` i mail na `ADMIN_EMAIL` (sprawdź też SPAM).
 
-2. **Test wysyłki (diagnostyka)**  
-   Otwórz w przeglądarce: `https://TWOJ-BACKEND.onrender.com/api/email-test`  
-   - Odpowiedź `{"ok":true,"message":"Test email sent to ..."}` – sprawdź skrzynkę (też SPAM).  
-   - Odpowiedź `{"ok":false,"error":"..."}` – w `error` jest przyczyna (np. błąd logowania EAUTH = użyj hasła aplikacji; timeout = spróbuj port 465).
+---
 
-3. **Logi backendu na Renderze**  
-   Web Service → **Logs**. Przy wysyłce checklisty szukaj wpisów `[EMAIL]` – tam są dokładne błędy SMTP.
+## Opcja B: SMTP (Gmail itd.)
+
+Jeśli wolisz Gmail/SMTP, ustaw w Environment backendu:
+
+| Key | Value (przykład) |
+|-----|-------------------|
+| `SMTP_HOST` | `smtp.gmail.com` |
+| `SMTP_PORT` | `465` |
+| `SMTP_USER` | `twoj-email@gmail.com` |
+| `SMTP_PASS` | hasło aplikacji Gmail (nie zwykłe hasło) |
+| `ADMIN_EMAIL` | adres na który mają przychodzić checklisty |
+
+**Uwaga:** Z Render Gmail SMTP często nie działa (timeout / blokada). W takim przypadku użyj **Opcji A (Resend)**.
+
+### Gmail – hasło aplikacji
+
+- Konto Google → [Bezpieczeństwo](https://myaccount.google.com/security) → **Weryfikacja dwuetapowa** (włącz) → **Hasła aplikacji**.
+- Wygeneruj hasło dla aplikacji i wklej je w `SMTP_PASS`.
+
+---
+
+## Sprawdzenie działania
+
+1. **Health:** `https://TWOJ-BACKEND.onrender.com/api/health` → `emailConfigured: true`.
+2. **Test maila:** `https://TWOJ-BACKEND.onrender.com/api/email-test` → `ok: true` i mail na `ADMIN_EMAIL`.
+3. **Logi:** Web Service → **Logs**, szukaj wpisów `[EMAIL]`.
+
+---
 
 ## Uwagi
 
-- Zmienne ustawiasz **tylko w Web Service (backend)**. W Static Site (frontend) nie ustawiaj haseł SMTP.
-- `ADMIN_EMAIL` – na ten adres trafia lista z formularza (np. ten sam co SMTP_USER).
+- Zmienne ustawiasz **tylko w Web Service (backend)**. W Static Site (frontend) nie dodawaj kluczy API ani haseł.
+- **Priorytet:** Jeśli ustawisz **RESEND_API_KEY** i **ADMIN_EMAIL**, aplikacja używa Resend i ignoruje SMTP. Żeby użyć Gmaila, nie ustawiaj `RESEND_API_KEY`.
