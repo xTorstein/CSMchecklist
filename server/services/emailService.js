@@ -13,37 +13,39 @@ function validateSMTPConfig() {
   return true;
 }
 
-// Create transporter function - creates transporter if config is valid
+// Create transporter from current env (called per send so env is always up to date)
 function createTransporter() {
   if (!validateSMTPConfig()) {
     return null;
   }
-  
   try {
-    const port = parseInt(process.env.SMTP_PORT);
+    const port = parseInt(process.env.SMTP_PORT, 10);
     const smtpPort = (port && !isNaN(port)) ? port : 587;
-    
-    return nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+    const isSecurePort = smtpPort === 465;
+
+    const options = {
+      host,
       port: smtpPort,
-      secure: false, // true for 465, false for other ports
+      secure: isSecurePort,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS
-      }
-    });
+      },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000
+    };
+
+    // Port 587 uses STARTTLS; be explicit for Gmail/cloud
+    if (!isSecurePort) {
+      options.requireTLS = true;
+    }
+
+    return nodemailer.createTransport(options);
   } catch (error) {
     console.error('Error creating transporter:', error.message);
     return null;
   }
-}
-
-// Create transporter only if credentials are available
-let transporter = createTransporter();
-if (transporter) {
-  console.log('✅ [EMAIL] Transporter SMTP utworzony pomyślnie');
-} else {
-  console.warn('⚠️ [EMAIL] Transporter SMTP nie został utworzony - brak konfiguracji');
 }
 
 // Send checklist email to admin
@@ -51,20 +53,14 @@ async function sendChecklistEmail({ lecturerName, lecturerEmail, subjectName, da
   console.log('📧 [EMAIL] Rozpoczynanie wysyłki email dla checklisty ID:', checklistId);
   
   try {
-    // Recreate transporter if it doesn't exist (in case env vars changed)
+    // Create transporter from current env on each send (no stale config)
+    const transporter = createTransporter();
     if (!transporter) {
-      console.log('🔄 [EMAIL] Próba ponownego utworzenia transportera...');
-      transporter = createTransporter();
-    }
-    
-    // Validate configuration
-    if (!validateSMTPConfig() || !transporter) {
       console.error('❌ [EMAIL] Email service not properly configured. Skipping email send.');
-      console.error('   Transporter exists:', !!transporter);
       console.error('   SMTP_USER:', process.env.SMTP_USER ? 'SET (' + process.env.SMTP_USER + ')' : 'NOT SET');
       console.error('   SMTP_PASS:', process.env.SMTP_PASS ? 'SET (***)' : 'NOT SET');
       console.error('   ADMIN_EMAIL:', process.env.ADMIN_EMAIL || 'NOT SET');
-      return; // Returns resolved promise
+      return;
     }
 
     // Validate input data
@@ -158,8 +154,41 @@ Wiadomość wygenerowana automatycznie przez system CSM Checklist
   }
 }
 
+function isEmailConfigured() {
+  return !!(process.env.SMTP_USER && process.env.SMTP_PASS && process.env.ADMIN_EMAIL);
+}
+
+// Send a minimal test email (for debugging SMTP on Render)
+async function sendTestEmail() {
+  if (!isEmailConfigured()) {
+    return { ok: false, error: 'SMTP not configured (missing SMTP_USER, SMTP_PASS or ADMIN_EMAIL)' };
+  }
+  try {
+    const transporter = createTransporter();
+    if (!transporter) {
+      return { ok: false, error: 'Could not create SMTP transporter' };
+    }
+    await transporter.sendMail({
+      from: `"CSM Checklist Test" <${process.env.SMTP_USER}>`,
+      to: process.env.ADMIN_EMAIL,
+      subject: 'CSM Checklist – test SMTP',
+      text: 'To jest test konfiguracji email. Jeśli to widzisz, SMTP działa.'
+    });
+    return { ok: true, message: 'Test email sent to ' + process.env.ADMIN_EMAIL };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err.message || String(err),
+      code: err.code,
+      hint: err.code === 'EAUTH' ? 'Use Gmail App Password, not normal password. See RENDER-EMAIL-SETUP.md' : undefined
+    };
+  }
+}
+
 module.exports = {
-  sendChecklistEmail
+  sendChecklistEmail,
+  isEmailConfigured,
+  sendTestEmail
 };
 
 

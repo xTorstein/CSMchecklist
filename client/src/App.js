@@ -6,15 +6,18 @@ import SuccessMessage from './components/SuccessMessage';
 function App() {
   const [submitted, setSubmitted] = useState(false);
   const [checklistId, setChecklistId] = useState(null);
+  const [emailSent, setEmailSent] = useState(true);
 
-  const handleSubmitSuccess = (id) => {
-    setChecklistId(id);
+  const handleSubmitSuccess = (data) => {
+    setChecklistId(data.checklistId);
+    setEmailSent(data.emailSent !== false);
     setSubmitted(true);
   };
 
   const handleReset = () => {
     setSubmitted(false);
     setChecklistId(null);
+    setEmailSent(true);
   };
 
   return (
@@ -28,7 +31,7 @@ function App() {
         {!submitted ? (
           <ChecklistForm onSuccess={handleSubmitSuccess} />
         ) : (
-          <SuccessMessage checklistId={checklistId} onReset={handleReset} />
+          <SuccessMessage checklistId={checklistId} emailSent={emailSent} onReset={handleReset} />
         )}
       </div>
     </div>

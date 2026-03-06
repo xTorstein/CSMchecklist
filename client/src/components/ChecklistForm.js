@@ -103,7 +103,7 @@ const ChecklistForm = ({ onSuccess }) => {
       });
 
       if (response.data.success) {
-        onSuccess(response.data.checklistId);
+        onSuccess(response.data);
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Wystąpił błąd podczas wysyłania checklisty');

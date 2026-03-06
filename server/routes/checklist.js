@@ -65,9 +65,9 @@ router.post('/create', async (req, res) => {
 
         const checklistId = this.lastID;
 
-        // Send email notification (don't wait for it, don't fail request if it fails)
-        console.log('📝 [CHECKLIST] Próba wysłania emaila dla checklisty ID:', checklistId);
-        emailService.sendChecklistEmail({
+        // Send email and wait up to 10s so we can report if it succeeded
+        console.log('📝 [CHECKLIST] Wysyłanie emaila dla checklisty ID:', checklistId);
+        const emailPromise = emailService.sendChecklistEmail({
           lecturerName,
           lecturerEmail,
           subjectName,
@@ -75,26 +75,31 @@ router.post('/create', async (req, res) => {
           items,
           additionalNotes,
           checklistId
-        })
-        .then(result => {
-          if (result) {
-            console.log('✅ [CHECKLIST] Email wysłany pomyślnie dla checklisty ID:', checklistId);
-          } else {
-            console.warn('⚠️ [CHECKLIST] Email nie został wysłany (funkcja zwróciła undefined) dla checklisty ID:', checklistId);
-          }
-        })
-        .catch(err => {
-          console.error('❌ [CHECKLIST] Email error (non-blocking):', err.message || err);
-          console.error('   Stack:', err.stack);
-          // Don't fail the request if email fails - checklist is already saved
         });
-
-        // Always return success if database insert succeeded
-        res.json({
-          success: true,
-          checklistId: checklistId,
-          message: 'Checklista została wysłana pomyślnie'
-        });
+        const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 10000));
+        Promise.race([emailPromise, timeoutPromise])
+          .then((emailResult) => {
+            if (emailResult) {
+              console.log('✅ [CHECKLIST] Email wysłany pomyślnie dla checklisty ID:', checklistId);
+            } else {
+              console.warn('⚠️ [CHECKLIST] Email nie został wysłany dla checklisty ID:', checklistId);
+            }
+            res.json({
+              success: true,
+              checklistId: checklistId,
+              message: 'Checklista została wysłana pomyślnie',
+              emailSent: !!emailResult
+            });
+          })
+          .catch((err) => {
+            console.error('❌ [CHECKLIST] Email error:', err.message || err);
+            res.json({
+              success: true,
+              checklistId: checklistId,
+              message: 'Checklista została wysłana pomyślnie',
+              emailSent: false
+            });
+          });
       }
     );
   } catch (error) {

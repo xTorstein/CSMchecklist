@@ -1,13 +1,15 @@
 import React from 'react';
 import './SuccessMessage.css';
 
-const SuccessMessage = ({ checklistId, onReset }) => {
+const SuccessMessage = ({ checklistId, emailSent, onReset }) => {
   return (
     <div className="success-message">
       <div className="success-icon">✓</div>
       <h2>Checklista została wysłana!</h2>
       <p className="success-text">
-        Twoja checklista została pomyślnie utworzona i email został wysłany do administratora.
+        {emailSent
+          ? 'Twoja checklista została pomyślnie utworzona i email został wysłany do administratora.'
+          : 'Twoja checklista została zapisana. Powiadomienie email nie zostało wysłane – skontaktuj się z administratorem.'}
       </p>
       {checklistId && (
         <p className="checklist-id">
