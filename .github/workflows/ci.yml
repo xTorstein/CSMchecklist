@@ -50,13 +50,14 @@ jobs:
       
       - name: Install frontend dependencies
         working-directory: ./client
-        run: npm ci
+        run: npm install
       
       - name: Build frontend
         working-directory: ./client
         run: npm run build
         env:
           CI: false
+          NODE_OPTIONS: --max-old-space-size=4096
       
       - name: Check build output
         run: |
