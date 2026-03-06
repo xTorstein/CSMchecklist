@@ -1,5 +1,9 @@
 # CSM Checklist - Kierunek Pielęgniarstwo
 
+[![CI/CD Pipeline](https://github.com/czopekwiktor1-bit/CSMchecklist/actions/workflows/ci.yml/badge.svg)](https://github.com/czopekwiktor1-bit/CSMchecklist/actions/workflows/ci.yml)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org/)
+[![License](https://img.shields.io/badge/license-ISC-blue)](LICENSE)
+
 Aplikacja webowa (PWA) umożliwiająca wykładowcom wypełnianie checklisty potrzebnych materiałów i rzeczy na zajęcia dla studentów pielęgniarstwa. Po wypełnieniu checklisty administrator otrzymuje email z listą potrzebnych materiałów.
 
 ## 🚀 Funkcjonalności

@@ -42,3 +42,10 @@ Thumbs.db
 # Misc
 *.log
 
+# Security - pliki z hasłami
+hasło.txt
+haslo.txt
+password*.txt
+*.key
+*.pem
+

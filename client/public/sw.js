@@ -1,4 +1,4 @@
-const CACHE_NAME = 'csm-checklist-v1';
+const CACHE_NAME = 'csm-checklist-v2';
 const urlsToCache = [
   '/',
   '/manifest.json',
@@ -22,9 +22,32 @@ self.addEventListener('install', (event) => {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', (event) => {
+  const requestUrl = new URL(event.request.url);
+
   // Skip API requests
-  if (event.request.url.includes('/api/')) {
+  if (requestUrl.pathname.includes('/api/')) {
     return; // Don't cache API calls
+  }
+
+  // Always prefer network for CSS/JS to avoid stale styles or scripts
+  if (
+    requestUrl.pathname.endsWith('.css') ||
+    requestUrl.pathname.endsWith('.js') ||
+    requestUrl.pathname.endsWith('.map')
+  ) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (!response || response.status !== 200) {
+            return response;
+          }
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
   }
 
   event.respondWith(

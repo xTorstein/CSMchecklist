@@ -1,0 +1,96 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+      
+      - name: Install backend dependencies
+        working-directory: ./server
+        run: npm ci
+      
+      - name: Run backend tests (if any)
+        working-directory: ./server
+        run: |
+          echo "Backend dependencies installed successfully"
+          node --version
+          npm --version
+
+  test-frontend:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+      
+      - name: Install frontend dependencies
+        working-directory: ./client
+        run: npm ci
+      
+      - name: Build frontend
+        working-directory: ./client
+        run: npm run build
+        env:
+          CI: false
+      
+      - name: Check build output
+        run: |
+          if [ -d "client/build" ]; then
+            echo "✅ Frontend build successful"
+            ls -la client/build
+          else
+            echo "❌ Build directory not found"
+            exit 1
+          fi
+
+  validate-config:
+    name: Validate Configuration
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check required files
+        run: |
+          echo "Checking required files..."
+          [ -f "server/package.json" ] || exit 1
+          [ -f "client/package.json" ] || exit 1
+          [ -f "server/index.js" ] || exit 1
+          [ -f "client/public/manifest.json" ] || exit 1
+          [ -f ".gitignore" ] || exit 1
+          echo "✅ All required files present"
+      
+      - name: Verify .env is ignored
+        run: |
+          if git ls-files | grep -q "\.env$"; then
+            echo "❌ ERROR: .env file is tracked in git!"
+            exit 1
+          else
+            echo "✅ .env is properly ignored"
+          fi
