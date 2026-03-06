@@ -83,8 +83,17 @@ const ChecklistForm = ({ onSuccess }) => {
 
     try {
       // Use environment variable for API URL if set (for production), otherwise use proxy (for development)
-      const apiUrl = process.env.REACT_APP_API_URL || '';
-      const response = await axios.post(`${apiUrl}/api/checklist/create`, {
+      const rawApiUrl = process.env.REACT_APP_API_URL || '';
+      // Accept either:
+      // - https://backend.onrender.com
+      // - https://backend.onrender.com/
+      // - https://backend.onrender.com/api
+      // - https://backend.onrender.com/api/
+      const apiBaseUrl = rawApiUrl
+        .replace(/\/+$/, '')
+        .replace(/\/api$/, '');
+
+      const response = await axios.post(`${apiBaseUrl}/api/checklist/create`, {
         lecturerName: formData.lecturerName,
         lecturerEmail: formData.lecturerEmail,
         subjectName: formData.subjectName,
