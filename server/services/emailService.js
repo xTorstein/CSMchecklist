@@ -101,7 +101,11 @@ async function sendChecklistEmailViaResend(payload) {
     html
   });
   if (error) {
-    console.error('❌ [EMAIL] Resend error:', error.message || error);
+    const msg = error.message || error;
+    console.error('❌ [EMAIL] Resend error:', msg);
+    if (error.name === 'validation_error' || String(msg).includes('own email address')) {
+      console.error('   💡 Ustaw ADMIN_EMAIL na adres konta Resend albo zweryfikuj domenę (resend.com/domains) i ustaw RESEND_FROM_EMAIL.');
+    }
     return undefined;
   }
   console.log('✅ [EMAIL] Email wysłany przez Resend. ID:', data?.id);
@@ -203,7 +207,11 @@ async function sendTestEmail() {
       text: 'Test konfiguracji. Jeśli to widzisz, Resend działa.'
     });
     if (error) {
-      return { ok: false, error: error.message || String(error), code: error.name };
+      const msg = error.message || String(error);
+      const hint = (error.name === 'validation_error' || msg.includes('own email address'))
+        ? 'Bez zweryfikowanej domeny Resend pozwala wysyłać tylko na adres Twojego konta Resend. Ustaw ADMIN_EMAIL na ten adres (np. ten, którym się rejestrowałeś w Resend) albo zweryfikuj domenę na resend.com/domains i ustaw RESEND_FROM_EMAIL.'
+        : undefined;
+      return { ok: false, error: msg, code: error.name, hint };
     }
     return { ok: true, message: 'Test email wysłany (Resend) do ' + process.env.ADMIN_EMAIL };
   }

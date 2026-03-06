@@ -1,0 +1,46 @@
+{
+  "name": "csm-checklist-desktop",
+  "version": "1.0.0",
+  "description": "CSM Checklist - aplikacja desktopowa",
+  "main": "main.js",
+  "author": "",
+  "license": "ISC",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:all": "electron-builder --win --mac"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.csm.checklist",
+    "productName": "CSM Checklist",
+    "directories": {
+      "output": "dist"
+    },
+    "files": ["main.js"],
+    "extraResources": [],
+    "win": {
+      "target": ["nsis", "portable"],
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerLanguages": ["pl", "en"],
+      "shortcutName": "CSM Checklist"
+    },
+    "mac": {
+      "target": ["dmg"],
+      "category": "public.app-category.education"
+    },
+    "dmg": {
+      "title": "CSM Checklist"
+    }
+  }
+}

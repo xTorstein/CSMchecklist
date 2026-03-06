@@ -18,11 +18,13 @@ Aby lista z formularza była wysyłana na maila, w **Web Service** (backend) na 
    | Key | Value |
    |-----|--------|
    | `RESEND_API_KEY` | `re_xxxxxxxx` (twój klucz) |
-   | `ADMIN_EMAIL` | adres e-mail, na który mają przychodzić checklisty |
+   | `ADMIN_EMAIL` | adres, na który mają przychodzić checklisty |
 
-5. (Opcjonalnie) Jeśli masz zweryfikowaną domenę w Resend, dodaj:
+   **Ważne:** Bez zweryfikowanej domeny Resend pozwala wysyłać **tylko na adres e-mail Twojego konta Resend** (ten, którym się rejestrowałeś). Ustaw więc **ADMIN_EMAIL** na ten sam adres (np. `wiktor.czopeki@gmail.com`) – wtedy maile z checklisty będą przychodzić na Twoją skrzynkę.
+
+5. (Opcjonalnie) Aby wysyłać na **dowolny adres** (nie tylko na adres konta): w Resend wejdź w **Domains** → dodaj i zweryfikuj domenę ([resend.com/domains](https://resend.com/domains)). Potem na Renderze dodaj zmienną:
    - `RESEND_FROM_EMAIL` = `"CSM Checklist" <notifications@twoja-domena.pl>`  
-   Bez tego maile będą wysyłane z `onboarding@resend.dev` (działa do testów).
+   Wtedy możesz ustawić `ADMIN_EMAIL` na dowolny adres.
 
 6. **Save Changes** – Render zrestartuje backend.
 

@@ -2,19 +2,55 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const sqlite3 = require('sqlite3').verbose();
 const checklistRoutes = require('./routes/checklist');
 const emailService = require('./services/emailService');
 
-// Server initialization
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// Security: headers
+app.use(helmet({ contentSecurityPolicy: false }));
+
+// Security: limit body size (100 KB)
+app.use(bodyParser.json({ limit: '100kb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '100kb' }));
+
+// Security: CORS – w produkcji dozwolone tylko z frontendu (Render)
+const corsOrigin = process.env.CORS_ORIGIN || process.env.FRONTEND_URL;
+app.use(cors({
+  origin: corsOrigin ? corsOrigin.split(',').map(s => s.trim()) : true,
+  optionsSuccessStatus: 200
+}));
+
+// Security: rate limit – ogólny (100 żądań / 15 min na IP)
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { success: false, error: 'Zbyt wiele żądań. Spróbuj za chwilę.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+app.use('/api/', generalLimiter);
+
+// Security: ostrzejszy limit dla tworzenia checklisty (20 / 15 min) i testu email (5 / 15 min)
+const createLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { success: false, error: 'Zbyt wiele wysyłek. Poczekaj chwilę.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+const emailTestLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { ok: false, error: 'Zbyt wiele prób. Poczekaj chwilę.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+app.use('/api/checklist/create', createLimiter);
 
 // Routes
 app.use('/api/checklist', checklistRoutes);
@@ -31,8 +67,8 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Test email endpoint – open in browser to verify SMTP (e.g. https://your-backend.onrender.com/api/email-test)
-app.get('/api/email-test', async (req, res) => {
+// Test email endpoint – rate limited (5 / 15 min)
+app.get('/api/email-test', emailTestLimiter, async (req, res) => {
   try {
     const result = await emailService.sendTestEmail();
     res.json(result);

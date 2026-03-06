@@ -34,16 +34,68 @@ try {
   });
 }
 
+// Limity długości (ochrona przed nadmiernymi danymi)
+const MAX_TEXT = 500;
+const MAX_NOTES = 2000;
+const MAX_ITEMS = 100;
+const MAX_ITEM_NAME = 300;
+
+function trimStr(s) {
+  return typeof s === 'string' ? s.trim().slice(0, MAX_TEXT) : '';
+}
+
 // Create new checklist
 router.post('/create', async (req, res) => {
   try {
-    const { lecturerName, lecturerEmail, subjectName, dateNeeded, items, additionalNotes } = req.body;
+    let { lecturerName, lecturerEmail, subjectName, dateNeeded, items, additionalNotes } = req.body;
 
     // Validate required fields
-    if (!lecturerName || !lecturerEmail || !subjectName || !dateNeeded || !items || items.length === 0) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Wszystkie wymagane pola muszą być wypełnione' 
+    if (!lecturerName || !lecturerEmail || !subjectName || !dateNeeded || !items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Wszystkie wymagane pola muszą być wypełnione'
+      });
+    }
+
+    if (items.length > MAX_ITEMS) {
+      return res.status(400).json({
+        success: false,
+        error: `Maksymalnie ${MAX_ITEMS} pozycji na listę.`
+      });
+    }
+
+    lecturerName = trimStr(lecturerName);
+    lecturerEmail = trimStr(lecturerEmail);
+    subjectName = trimStr(subjectName);
+    dateNeeded = trimStr(dateNeeded);
+    additionalNotes = typeof additionalNotes === 'string' ? additionalNotes.trim().slice(0, MAX_NOTES) : '';
+
+    if (!lecturerName || !lecturerEmail || !subjectName || !dateNeeded) {
+      return res.status(400).json({
+        success: false,
+        error: 'Wszystkie wymagane pola muszą być wypełnione'
+      });
+    }
+
+    // Walidacja email (prosta)
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRe.test(lecturerEmail)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nieprawidłowy adres email.'
+      });
+    }
+
+    items = items.map((it, i) => {
+      const name = typeof it?.name === 'string' ? it.name.trim().slice(0, MAX_ITEM_NAME) : String(it?.name ?? '').slice(0, MAX_ITEM_NAME);
+      const quantity = typeof it?.quantity === 'string' ? it.quantity.trim().slice(0, 50) : (it?.quantity != null ? String(it.quantity) : '');
+      return { name, quantity };
+    }).filter(it => it.name.length > 0);
+
+    if (items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Dodaj co najmniej jedną pozycję z nazwą.'
       });
     }
 
